@@ -214,3 +214,87 @@ pub unsafe fn eviocgabs(fd: ::libc::c_int, abs: u32, buf: *mut input_absinfo) ->
     convert_ioctl_res!(::nix::libc::ioctl(fd, ior!(b'E', 0x40 + abs, ::std::mem::size_of::<input_absinfo>()) as ::libc::c_ulong, buf))
 }
 
+const UINPUT_MAX_NAME_SIZE: usize = 80;
+
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct uinput_setup {
+    pub id: input_id,
+    pub name: [::libc::c_char; UINPUT_MAX_NAME_SIZE],
+    pub ff_effects_max: u32,
+}
+impl ::std::default::Default for uinput_setup {
+    fn default() -> Self { unsafe { ::std::mem::zeroed() } }
+}
+impl uinput_setup {
+    pub fn set_name<T: AsRef<str>>(&mut self, name: T) -> ::nix::Result<()> {
+        let string = match ::std::ffi::CString::new(name.as_ref()) {
+            Err(_) => Err(::nix::Error::from_errno(::nix::Errno::EINVAL)),
+            Ok(x) => Ok(x),
+        }?;
+        let bytes = string.as_bytes_with_nul();
+
+        if bytes.len() > UINPUT_MAX_NAME_SIZE as usize {
+            return Err(::nix::Error::from_errno(::nix::Errno::EINVAL));
+        }
+
+        (&mut self.name)[..bytes.len()].clone_from_slice(unsafe { ::std::mem::transmute(bytes) });
+        Ok(())
+    }
+}
+
+// Hardcoding Linux numbers here, because FreeBSD's uinput.ko accepts them
+// (except for ui_dev_setup o_0) and nix's macro generates BSD numbers on BSD,
+// which end up wrong (e.g. 0x805c5501 instead of 0x20005501)
+ioctl!(bad none ui_dev_create with 0x20005501);
+ioctl!(bad none ui_dev_destroy with 0x20005502);
+ioctl!(write_ptr ui_dev_setup with b'U', 3; uinput_setup);
+
+ioctl!(bad write_int ui_set_evbit with 0x20045564);
+ioctl!(bad write_int ui_set_keybit with 0x20045565);
+ioctl!(bad write_int ui_set_relbit with 0x20045566);
+ioctl!(bad write_int ui_set_absbit with 0x20045567);
+ioctl!(bad write_int ui_set_mscbit with 0x20045568);
+ioctl!(bad write_int ui_set_ledbit with 0x20045569);
+ioctl!(bad write_int ui_set_sndbit with 0x2004556a);
+ioctl!(bad write_int ui_set_ffbit with 0x2004556b);
+ioctl!(bad write_ptr ui_set_phys with 0x2004556c; ::libc::c_char);
+ioctl!(bad write_int ui_set_swbit with 0x2004556d);
+ioctl!(bad write_int ui_set_propbit with 0x2004556e);
+
+#[macro_export]
+macro_rules! do_ioctl {
+    ($name:ident($($arg:expr),+)) => {{
+        unsafe { ::raw::$name($($arg,)+) }?
+    }}
+}
+
+#[macro_export]
+macro_rules! do_ioctl_buf {
+    ($buf:ident, $name:ident, $fd:expr) => {
+        unsafe {
+            let blen = $buf.len();
+            match ::raw::$name($fd, &mut $buf[..]) {
+                Ok(len) if len >= 0 => {
+                    $buf[blen - 1] = 0;
+                    Some(::std::ffi::CStr::from_ptr(&mut $buf[0] as *mut u8 as *mut _).to_owned())
+                },
+                _ => None
+            }
+        }
+    }
+}
+
+pub fn gettime(clock: ::libc::c_int) -> ::libc::timeval {
+    let mut time = unsafe { ::std::mem::zeroed() };
+    unsafe { clock_gettime(clock, &mut time); }
+    ::libc::timeval {
+        tv_sec: time.tv_sec,
+        tv_usec: time.tv_nsec / 1000,
+    }
+}
+
+#[link(name = "rt")]
+extern {
+    fn clock_gettime(clkid: ::libc::c_int, res: *mut ::libc::timespec);
+}

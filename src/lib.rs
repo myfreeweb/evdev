@@ -42,45 +42,21 @@ extern crate libc;
 extern crate fixedbitset;
 extern crate num;
 
+#[macro_use]
 pub mod raw;
 pub mod data;
+pub mod uinput;
 
 use std::os::unix::io::*;
 use std::os::unix::ffi::*;
 use std::path::Path;
-use std::ffi::{CString, CStr};
+use std::ffi::CString;
 use std::mem::{size_of, transmute};
 
 use nix::Error;
 
 use raw::*;
 use data::*;
-
-#[link(name = "rt")]
-extern {
-    fn clock_gettime(clkid: libc::c_int, res: *mut libc::timespec);
-}
-
-macro_rules! do_ioctl {
-    ($name:ident($($arg:expr),+)) => {{
-        unsafe { ::raw::$name($($arg,)+) }?
-    }}
-}
-
-macro_rules! do_ioctl_buf {
-    ($buf:ident, $name:ident, $fd:expr) => {
-        unsafe {
-            let blen = $buf.len();
-            match ::raw::$name($fd, &mut $buf[..]) {
-                Ok(len) if len >= 0 => {
-                    $buf[blen - 1] = 0;
-                    Some(CStr::from_ptr(&mut $buf[0] as *mut u8 as *mut _).to_owned())
-                },
-                _ => None
-            }
-        }
-    }
-}
 
 #[derive(Clone)]
 pub struct DeviceState {
@@ -546,12 +522,7 @@ impl Device {
         // device state.
         let old_state = self.state.clone();
         try!(self.sync_state());
-        let mut time = unsafe { std::mem::zeroed() };
-        unsafe { clock_gettime(self.clock, &mut time); }
-        let time = libc::timeval {
-            tv_sec: time.tv_sec,
-            tv_usec: time.tv_nsec / 1000,
-        };
+        let time = gettime(self.clock);
 
         if self.ty.contains(KEY) {
             for key_idx in 0..self.key_bits.len() {
