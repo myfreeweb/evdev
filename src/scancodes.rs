@@ -2,7 +2,7 @@
 ///
 /// Each represents a distinct key.
 #[repr(C)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, EnumString)]
 pub enum Key {
     KEY_RESERVED =	0,
     KEY_ESC =		1,

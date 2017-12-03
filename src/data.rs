@@ -230,7 +230,7 @@ bitflags! {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, EnumString)]
 pub enum FFEffect {
     FF_RUMBLE = 0x50,
     FF_PERIODIC = 0x51,
@@ -285,7 +285,7 @@ macro_rules! impl_number {
 impl_number!(Types, Props, RelativeAxis, AbsoluteAxis, Switch, Led, Misc, FFStatus, Repeat, Sound);
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, EnumString)]
 pub enum Synchronization {
     /// Terminates a packet of events from the device.
     SYN_REPORT = 0,
