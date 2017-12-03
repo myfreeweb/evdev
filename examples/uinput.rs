@@ -13,20 +13,19 @@ fn type_key(dev: &mut uinput::Device, k: data::Key) {
 }
 
 fn main() {
+    let builder = uinput::Builder::new(&std::path::Path::new("/dev/uinput")).expect("builder");
+    uinput_ioctl!(ui_set_evbit(builder.fd(), data::KEY.number())).expect("ioctl");
+    uinput_ioctl!(ui_set_keybit(builder.fd(), data::KEY_1 as i32)).expect("ioctl");
+    uinput_ioctl!(ui_set_keybit(builder.fd(), data::KEY_2 as i32)).expect("ioctl");
+    uinput_ioctl!(ui_set_keybit(builder.fd(), data::KEY_3 as i32)).expect("ioctl");
+    uinput_ioctl!(ui_set_keybit(builder.fd(), data::KEY_4 as i32)).expect("ioctl");
+    uinput_ioctl!(ui_set_keybit(builder.fd(), data::KEY_5 as i32)).expect("ioctl");
     let mut conf = raw::uinput_setup::default();
     conf.set_name("Devicey McDeviceFace").expect("set_name");
     conf.id.bustype = 0x16;
     conf.id.vendor = 69;
     conf.id.product = 69;
-    let mut d = uinput::Device::open(&std::path::Path::new("/dev/uinput"), conf, |fd| {
-        uinput_ioctl!(ui_set_evbit(fd, data::KEY.number()))?;
-        uinput_ioctl!(ui_set_keybit(fd, data::KEY_1 as i32))?;
-        uinput_ioctl!(ui_set_keybit(fd, data::KEY_2 as i32))?;
-        uinput_ioctl!(ui_set_keybit(fd, data::KEY_3 as i32))?;
-        uinput_ioctl!(ui_set_keybit(fd, data::KEY_4 as i32))?;
-        uinput_ioctl!(ui_set_keybit(fd, data::KEY_5 as i32))?;
-        Ok(())
-    }).expect("open");
+    let mut d = builder.setup(conf).expect("setup");
     std::thread::sleep(std::time::Duration::from_secs(1)); // let clients initialize
     type_key(&mut d, data::KEY_1);
     type_key(&mut d, data::KEY_2);
