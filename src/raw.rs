@@ -276,33 +276,33 @@ ioctl!(bad write_int ui_set_swbit with 0x2004556d);
 #[cfg(target_os = "freebsd")]
 ioctl!(bad write_int ui_set_propbit with 0x2004556e);
 
+#[cfg(not(target_os = "freebsd"))]
+ioctl!(none ui_dev_create with b'U', 1);
+#[cfg(not(target_os = "freebsd"))]
+ioctl!(none ui_dev_destroy with b'U', 2);
+#[cfg(not(target_os = "freebsd"))]
+ioctl!(write_int ui_set_evbit with b'U', 100);
+#[cfg(not(target_os = "freebsd"))]
+ioctl!(write_int ui_set_keybit with b'U', 101);
+#[cfg(not(target_os = "freebsd"))]
+ioctl!(write_int ui_set_relbit with b'U', 102);
+#[cfg(not(target_os = "freebsd"))]
+ioctl!(write_int ui_set_absbit with b'U', 103);
+#[cfg(not(target_os = "freebsd"))]
+ioctl!(write_int ui_set_mscbit with b'U', 104);
+#[cfg(not(target_os = "freebsd"))]
+ioctl!(write_int ui_set_ledbit with b'U', 105);
+#[cfg(not(target_os = "freebsd"))]
+ioctl!(write_int ui_set_sndbit with b'U', 106);
+#[cfg(not(target_os = "freebsd"))]
+ioctl!(write_int ui_set_ffbit with b'U', 107);
+#[cfg(not(target_os = "freebsd"))]
+ioctl!(write_ptr ui_set_phys with b'U', 108; ::libc::c_char);
+#[cfg(not(target_os = "freebsd"))]
+ioctl!(write_int ui_set_swbit with b'U', 109);
+#[cfg(not(target_os = "freebsd"))]
+ioctl!(write_int ui_set_propbit with b'U', 110);
 
-#[cfg(target_os = "linux")]
-ioctl!(bad none ui_dev_create with 0x00005501);
-#[cfg(target_os = "linux")]
-ioctl!(bad none ui_dev_destroy with 0x00005502);
-#[cfg(target_os = "linux")]
-ioctl!(bad write_int ui_set_evbit with 0x00045564);
-#[cfg(target_os = "linux")]
-ioctl!(bad write_int ui_set_keybit with 0x00045565);
-#[cfg(target_os = "linux")]
-ioctl!(bad write_int ui_set_relbit with 0x00045566);
-#[cfg(target_os = "linux")]
-ioctl!(bad write_int ui_set_absbit with 0x00045567);
-#[cfg(target_os = "linux")]
-ioctl!(bad write_int ui_set_mscbit with 0x00045568);
-#[cfg(target_os = "linux")]
-ioctl!(bad write_int ui_set_ledbit with 0x00045569);
-#[cfg(target_os = "linux")]
-ioctl!(bad write_int ui_set_sndbit with 0x0004556a);
-#[cfg(target_os = "linux")]
-ioctl!(bad write_int ui_set_ffbit with 0x0004556b);
-#[cfg(target_os = "linux")]
-ioctl!(bad write_ptr ui_set_phys with 0x0004556c; ::libc::c_char);
-#[cfg(target_os = "linux")]
-ioctl!(bad write_int ui_set_swbit with 0x0004556d);
-#[cfg(target_os = "linux")]
-ioctl!(bad write_int ui_set_propbit with 0x0004556e);
 
 #[macro_export]
 macro_rules! do_ioctl {
